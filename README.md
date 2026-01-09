@@ -112,61 +112,95 @@ ADD R1, R2, R3   ; R1 = R2 + R3
 
 ## 5. Memory Mapping (ROM / RAM / I/O)
 
-Because I decided on using a **16 MB** memory which translates to *0x000000* - *0xFFFFFF*. In the following section I will try to divide this into the necessary places where every memory is mapped.
+With a **16 MB** physical address space ($000000 – $FFFFFF), the system has ample room for code, data, and peripherals. The memory map is strictly partitioned to ensure the boot sequence and I/O operations are predictable.
 
-The reset vector, this is where when power is turned on the PC (Program Counter) will go to. Commonly it is at adress *0x000000*. This is where the ROM should start at.
+**Reset Vector:**
+Upon power-up or reset, the Program Counter (PC) is initialized to `$000000`. This address corresponds to the start of the ROM, ensuring the CPU immediately executes the firmware/bootloader.
 
-I need atleast a small amount of ROM memory to atleast store the boot, and BIOS code so that the laptop will be usable.
+### 5.1 System Memory Map Layout
 
-### 5.1 My proposed memory mapped layout.
+| Address Range (Hex) | Size | Component | Description |
+| --- | --- | --- | --- |
+| **$000000 – $00FFFF** | 64 KB | **ROM** | System Firmware, BIOS, Bootloader. (Read-Only) |
+| **$010000 – $010FFF** | 4 KB | **MMIO** | Mapped I/O: Keyboard, UART, Screen Buffer, Timers. |
+| **$011000 – $FEFFFF** | ~15.8 MB | **RAM** | System Memory for user programs and data. |
+| **$FF0000 – $FFFFFF** | 64 KB | **RAM** | System Stack & Interrupt Vector Table (IVT). |
 
-Since I've got around **16 MB** of memory I have the luxury of memory unlike old machines, so I can be generous.
+### 5.2 Memory Mapped I/O (MMIO) Strategy
 
-| Address Range |Size |Component |Description|
-|---------------|-----|----------|-----------|
-| $000000 – $00FFFF | 64 KB | ROM | "System Firmware, Bootloader, Basic I/O drivers." |
-| $010000 – $010FFF | 4 KB | I/O Ports | "Keyboard, Screen Buffer, Serial, Timers." |
-| $011000 – $FEFFFF | ~15.8 MB | System RAM | General purpose workspace for user programs. |
-| $FF0000 – $FFFFFF | 64 KB | Stack/Vector | Reserved for the System Stack and Interrupt Vectors. | 
+In this architecture, Input/Output devices share the same address bus as RAM. There are no special `IN` or `OUT` instructions.
 
-### 5.2 Memory mapped I/O (MMIO)
+**Addressing Limitation & Solution:**
+Since the Instruction Set is fixed at **16 bits**, it is impossible to embed a full 24-bit physical address (like `$010500`) directly into a single instruction.
 
-In this design, we don't have special "Input" or "Output" instructions. Instead, we treat hardware like RAM.
+Therefore, accessing MMIO requires a **Two-Step "Page & Offset" Process**:
 
-*Example*: If the Screen is mapped to $010500, sending a character to the screen is as simple as: STORE R1, [$010500] (where R1 holds the character 'A').
+1. **Set the Page:** Load the target 64KB segment index (e.g., `$01` for I/O) into the **Segment Register**.
+2. **Access the Offset:** Use standard Load/Store instructions to access the specific address within that page.
+
+**Example: Writing character 'A' to Screen Buffer at `$010500**`
+
+```asm
+; Step 1: Point the Segment Register to the I/O Page ($01xxxx)
+MOVI R2, $01       ; Load Page Index 0x01
+MOV SEG, R2        ; Move to Segment Register
+
+; Step 2: Write to the Offset ($xxxx0500)
+MOVI R3, $0500     ; Load Buffer Offset
+MOVI R1, 'A'       ; Load Data
+STORE R1, [R3]     ; CPU writes 'A' to Physical Address $010500
+
+```
+
+---
 
 ## 6. Bus Protocol (The Handshake)
 
-Since the CPU is 16-bit and the address is 24-bit, the "Conversation" between the CPU and the RAM needs a strict protocol.
+The interface between the CPU and the system components relies on a strict synchronous protocol to manage the 16-bit Data Bus and 24-bit Address Bus.
 
-### 6.1 The Signal Lines
+### 6.1 Signal Line Definitions
 
-To talk to the memory, the CPU needs these physical pins:
+| Signal | Width | Type | Function |
+| --- | --- | --- | --- |
+| **A0–A23** | 24 pins | Output | **Address Bus:** Defines the target location. |
+| **D0–D15** | 16 pins | Bi-Dir | **Data Bus:** Transmits/Receives payload. |
+| **RW** | 1 pin | Output | **Read/Write:** High (1) = Read, Low (0) = Write. |
+| **CE** | 1 pin | Output | **Chip Enable:** Active Low signal to wake target device. |
+| **CLK** | 1 pin | Input | **System Clock:** Synchronizes all operations. |
 
-1. A0–A23 (24 pins): Address Bus.
+### 6.2 Electrical Logic Design
 
-2. D0–D15 (16 pins): Data Bus.
+The control signals (CE, RESET, INT) utilize **Active-Low Logic** (triggered by 0V/Ground) for three critical engineering reasons:
 
-3. RW (1 pin): Read/Write signal (High = Read, Low = Write).
+1. **Fail-Safe State (Pull-Ups):** All control lines are tied to VCC (Logic 1) via pull-up resistors. If a wire breaks or a module is unplugged, the system defaults to "Inactive" rather than randomly triggering events.
+2. **Current Sinking:** In TTL/CMOS hardware, it is generally faster and more power-efficient for a transistor to "sink" current to ground (pulling a 1 to a 0) than to "source" current.
+3. **Wired-OR Capability:** Multiple devices can share the same Interrupt line. If *any* device pulls the line Low, the CPU detects the request.
 
-4.  CE (1 pin): Chip Enable (Tells the RAM "I am talking to YOU").
+### 6.3 The Fetch/Execute Timing Cycle (T-States)
 
-5. CLK (1 pin): System Clock to keep everyone in sync.
+A standard memory access requires 4 clock ticks (T-States):
 
-There are three main reasons for this:
+* **T1 (Address Setup):** CPU asserts the valid 24-bit address onto `A0–A23`.
+* **T2 (Control Assert):** CPU sets `RW` (Read/Write) and drives `CE` LOW (Active) to select the memory chip.
+* **T3 (Wait/Stabilize):** The Memory/Peripheral decodes the address and places data onto the Data Bus (during a Read). *Note: Wait states can be inserted here for slow hardware.*
+* **T4 (Latch):** The CPU captures the data from `D0–D15` on the rising edge of the clock and releases `CE`.
 
-    Electrical Stability (The "Pull-up" Reason): If a wire accidentally breaks or a chip is disconnected, a "Pull-up resistor" ensures the wire stays at a High voltage (1). If the signal were Active-High, a broken wire might look like a "Disable" signal. Since "High" is the default resting state, we use "Low" (connecting to ground) to "Trigger" the action.
+---
 
-    Current Sinking: Historically, it was easier for transistors to "sink" current (pull a signal to 0V) than to "source" it (push it to 5V).
+## 7. The Segmentation Unit (Hardware Implementation)
 
-    Wired-OR Logic: You can connect multiple "Active-Low" outputs together more easily. If any one chip pulls the line Low, the signal is active.
+To convert the internal 16-bit logic into a 24-bit physical address without complex adder circuitry, the system uses **High-Byte Concatenation (Banking)**.
 
-### 6.2 The "Read" Cycle (How the CPU gets data)
+### 7.1 The Mechanism
 
-1. T1 (Clock Cycle 1): CPU puts the 24-bit address on the Address Bus.
+Instead of mathematically adding `(Segment × 256) + Offset`, which requires a slow Arithmetic Unit, the CPU physically wires the registers to the bus as follows:
 
-2. T2 (Clock Cycle 2): CPU sets RW to High (Read) and pulls CE Low (Enable).
+* **Physical Pins A16–A23 (The Page):** Directly connected to the **Segment Register (8 bits)**.
+* **Physical Pins A0–A15 (The Offset):** Directly connected to the **Internal Address Bus (16 bits)**.
 
-3. T3 (Clock Cycle 3): The RAM finds the data and places it on the Data Bus.
+### 7.2 The Result
 
-4. T4 (Clock Cycle 4): The CPU "latches" (grabs) the data from the bus and brings it inside a register.
+* **Hardware Benefit:** This requires **zero logic gates** for address generation—it is purely wire routing.
+* **Software View:** The memory appears as 256 distinct "Pages," each 64 KB in size.
+* **Protection:** Changing the `Segment Register` is a privileged operation, inherently protecting other memory pages from accidental corruption by user code limited to 16-bit offsets.
+
