@@ -204,3 +204,59 @@ Instead of mathematically adding `(Segment × 256) + Offset`, which requires a s
 * **Software View:** The memory appears as 256 distinct "Pages," each 64 KB in size.
 * **Protection:** Changing the `Segment Register` is a privileged operation, inherently protecting other memory pages from accidental corruption by user code limited to 16-bit offsets.
 
+## 8. Interrupt Model 
+
+An interrupt model is basically used for a cpu to stop what it's doing and give priority to the more dire event which interruptted it.
+
+Most I/O device have a dedicated bus for this purpose called Interrupt Service Routine (ISR).
+
+### 8.1 The Vector Table
+
+Since I have decided 24-bit address space, and there should be a way to tell the CPU where the "Emergency Code"
+
+### 8.2 The Hardware Handshake
+
+1. **Request**: A peripheral (like a keyboard) pulls the IRQ pin (Interrupt Request Pin) LOW.
+
+2. **Acknowledge**: At the end of the current instruction, the CPU finishes its work and signals IACK (Interrupt Acknowledge).
+
+3. **Context Save (The "Snapshot")**: The CPU automatically pushes the Program Counter (PC) and the Status Register (Flags) onto the Stack.
+
+4. **Jump**: The CPU looks up the address in the Vector Table and jumps to the ISR.
+
+5. **Return**: The ISR ends with a special instruction (e.g., RETI - Return from Interrupt), which pops the PC and Flags back, and the CPU resumes exactly where it left off.
+
+## 9. Privilege Model 
+
+Even though it only has one "user," it needs a privilege model to prevent a buggy program from accidentally overwriting the Interrupt Vector Table or the Segmentation Unit.
+
+### 9.1 Single-Mode "Protection"
+
+In a single-mode system, you aren't trying to hide data from other users; you are trying to protect the System Core from User Errors.
+
+- **The "Locked" Segment**: You can design your Segmentation Unit so that Segment $00 (where your ROM and Vector Table live) is Read-Only by default.
+
+- **Privileged Instructions**: Certain instructions—like changing the Segment Base or disabling Interrupts—can be "protected."
+
+- **The "Trap" Mechanism**: If a program tries to execute a protected instruction without the proper flag set in the Status Register, the CPU triggers a Software Interrupt (TRAP) and jumps to an error handler.
+
+### 9.2 The Status Register (Flags)
+
+To manage this, the 16-bit Status Register needs specific bits:
+
+| Bit	| Name	| Description |
+|-------|-------|-------------|
+| I	| IE	| Interrupt Enable (1 = Allow interrupts, 0 = Ignore).| 
+| P	| PRIV	| Privilege Level (1 = System Mode, 0 = User Mode).| 
+| S	| STEP	| Single-Step (Used for debugging code line-by-line).| 
+| Z/C/V/N	| ALU	| Standard math flags (Zero, Carry, Overflow, Negative).| 
+
+## 10. Hardware Implementation: The "Pins"
+
+To support these models, the physical CPU chip needs a few more pins:
+
+- **NMI (Non-Maskable Interrupt)**: An "Emergency Stop" pin that the CPU cannot ignore (e.g., for power failure).
+
+- **IRQ (Interrupt Request)**: Standard line for hardware like keyboards.
+
+- **IACK (Interrupt Acknowledge)**: CPU output to tell the hardware "I'm handling it."
