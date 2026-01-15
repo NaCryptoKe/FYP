@@ -27,4 +27,9 @@ initial begin
     #10 $finish;
 end
 
+initial begin
+    $monitor ("At time %2t, a = %d, b = %d, c_in = %d, sum = %d, c_out = %d",
+    $time, a, b, c_in, sum, c_out);
+end
+
 endmodule
