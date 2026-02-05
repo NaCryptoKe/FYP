@@ -67,3 +67,19 @@ Other Operators
 {}      concatenate
 {N{}}   replicate N times
 */
+
+/*
+A simple adder 
+
+module adder (input [3:0] A, input [3:0]B, output [3:0] Sum, output Cout);
+assign {Cout, Sum} = A + B;
+endmodule;
+*/
+
+/*
+Assignment in verilog
+There are two types:
+    continous and procedural assignment
+Continouts is: outside procedural blocks, drives values on to nets, automatically active at time zero, and automatically assigns value when the right hand changes.
+Procedural are: inside procedural blocks, updates register and memory data types, evaluated when the statement is encountered, assignment in procedural blocks using initial or always.
+*/
