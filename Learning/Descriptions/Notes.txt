@@ -1,0 +1,5 @@
+Descriptions are different levels of abstraction and methodologies used to describe a hardware.
+
+Gate Level Description: modeled using logical gates (AND, NOT, OR)
+Dataflow description: uses assign statement to model the flow of data through the circuit. Mainly used to describe combinational circuit.
+Behavioral Description: describes the functionality of the hardware using a high level approach with always blocks and if-else case and other statements.
