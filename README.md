@@ -1,8 +1,8 @@
-# Laptop Design Document (LDD) — v2.5
+# CHIP DESIGN
 
 **Project:** 16-bit CPU Architecture & OS Implementation
 **Author:** Nahom Ketema
-**Status:** Finalized Architecture
+**Status:** Thinking Phase
 
 ---
 
