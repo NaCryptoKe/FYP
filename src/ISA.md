@@ -1,0 +1,31 @@
+# ISA for V0.1 of the CPU architecture
+| ISA | OPCODE |
+|-----------|-----------|
+| MOV | 0x00 |
+| MOVI | 0x01 |
+| ADD | 0x02 |
+| ADDI | 0x03 |
+| HALT | 0x04 |
+| SUB | 0x05 |
+| SUBI | 0x06 |
+| CMP | 0x07 |
+| JMP | 0x08 |
+| JZ | 0x09 |
+| JNZ | 0x0A |
+| LOAD | 0x0B |
+| STORE | 0x0C |
+| PUSH | 0x0D |
+| POP | 0x0E |
+| CALL | 0x0F |
+| RET | 0x10 |
+| AND | 0x11 |
+| OR | 0x12 |
+| XOR | 0x13 |
+| NOT | 0x14 |
+| SHR | 0x15 |
+| SHL | 0x16 |
+| BSWAP | 0x17 |
+| MUL | 0x18 |
+| DIV | 0x19 |
+
+That's 26 opcodes

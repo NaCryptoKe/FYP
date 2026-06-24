@@ -65,3 +65,7 @@ uint16_t fetch(Machine *machine) {
     return (high << 8) | low;   // basically add the high and low bit to get the actual data, using Big Endian logic
 }
 ```
+
+# Current
+
+Currently it can load to memory, make instruction, address putting data to a value and making it halt
