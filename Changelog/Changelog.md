@@ -69,3 +69,9 @@ uint16_t fetch(Machine *machine) {
 # Current
 
 Currently it can load to memory, make instruction, address putting data to a value and making it halt
+
+# New changes
+
+Currently what I'm doing is trying to implement the ROM into the segmentation. Basically implementing the segmentation of the ram to see how to do it, and because I need the stack.
+
+Also thinking of adding a time management tool, that is used for basically adding a clock for the fetch, decode and execute cycle that I can control from being 3 GHZ to 1 KHz if I want to.

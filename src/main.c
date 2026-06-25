@@ -18,22 +18,22 @@ int main(void) {
         "Program Counter: 0X%06" PRIX32 
         "\nCurrent Address: 0X%06" PRIX32 
         "\nStack Pointer: 0X%06" PRIX32 
-        "\nZero Flag: %08b",
+        "\nZero Flag: %08b\n",
         pc, ld, sp, machine.cpu.flag
     );
 
-    // uint16_t inst = instruction_maker(MOVI, 0x03, 0x02, 0x04);  // (2 << 3) | 4 = 010100b = 20d = 0x14
-    // add_to_memory(inst, &machine);
+    uint16_t inst = instruction_maker(MOVI, 0x03, 0x02, 0x04);  // (2 << 3) | 4 = 010100b = 20d = 0x14
+    add_to_memory(inst, &machine);
 
-    // inst =  instruction_maker(MOV, 0x02, 0x03, 0x01);
-    // add_to_memory(inst, &machine);
+    inst =  instruction_maker(MOV, 0x02, 0x03, 0x01);
+    add_to_memory(inst, &machine);
 
-    // inst =  instruction_maker(ADD, 0x01, 0x02, 0x03);
-    // add_to_memory(inst, &machine);
+    inst =  instruction_maker(ADD, 0x01, 0x02, 0x03);
+    add_to_memory(inst, &machine);
 
-    // inst = instruction_maker(HALT, 0x00, 0x00, 0x00);
-    // add_to_memory(inst, &machine);
+    inst = instruction_maker(HALT, 0x00, 0x00, 0x00);
+    add_to_memory(inst, &machine);
 
-    //cycle(&machine);
+    cycle(&machine);
     return 0;
 }

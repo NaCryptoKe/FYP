@@ -2,9 +2,11 @@
 #define CPU_H
 
 #include <stdint.h>
+#include <time.h>
 
 #define MEMORY_SIZE 16 * 1024 * 1024        // 16 MiB
-#define STACK_SIZE  64 * 1024               // 16 KiB for stack
+#define STACK_SIZE  64 * 1024               // 64 KiB for stack
+#define CLOCK_SPEED 1                      // Clock speed of the virtual cpu, currently at 10Hz
 
 typedef struct {
     uint16_t r[8];      // Invariant 2- stating the 16 bit R0-R7
@@ -42,5 +44,6 @@ uint16_t instruction_maker(uint8_t mode, uint8_t opcode, uint8_t r1, uint8_t r2)
 void add_to_memory(uint16_t inst, Machine *machine);
 
 void start_machine(Machine *machine);
+void throttle(double hz);
 
 #endif  //CPU_H

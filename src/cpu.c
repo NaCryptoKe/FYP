@@ -20,13 +20,26 @@ uint16_t fetch(Machine *machine) {
 
 void cycle(Machine *machine) {
     while (!machine->cpu.halt) {
+        throttle(CLOCK_SPEED);
         uint16_t inst   = fetch(machine);
         uint8_t opcode  = (inst >> 9) & 0x7F;
         uint8_t rd      = (inst >> 6) & 0x07;
         uint8_t r1      = (inst >> 3) & 0x07;
         uint8_t r2      = (inst >> 0) & 0x07;
 
-        //printf("opcode 0x%02" PRIx8 "\nDestination Register 0x%02" PRIx8 "\nRegister 1 0x%03" PRIx8 "\nRegister 2 0x%03" PRIx8 "\n", opcode, rd, r1, r2);
+        // uint32_t pc = resolve_addr(machine->cpu.seg, machine->cpu.pc);
+        // uint32_t ld = resolve_addr(machine->cpu.seg, machine->cpu.load_addr);
+        // uint32_t sp = resolve_addr(0XFF, machine->cpu.sp);
+        // printf(
+        //     "\n\nThis is in Cycle\n"
+        //     "Program Counter: 0X%06" PRIX32 
+        //     "\nCurrent Address: 0X%06" PRIX32 
+        //     "\nStack Pointer: 0X%06" PRIX32 
+        //     "\nZero Flag: %08b\n",
+        //     pc, ld, sp, machine->cpu.flag
+        // );
+
+        // printf("opcode 0x%02" PRIx8 "\nDestination Register 0x%02" PRIx8 "\nRegister 1 0x%03" PRIx8 "\nRegister 2 0x%03" PRIx8 "\n", opcode, rd, r1, r2);
 
         switch (opcode) {
             case MOV:
@@ -61,7 +74,6 @@ void cycle(Machine *machine) {
     }
 }
 
-
 uint16_t instruction_maker(uint8_t opcode, uint8_t rd, uint8_t r1, uint8_t r2) {
     assert(r1 <= 7 && "Register 1 can't be above 7");    // There are only 8 registers R0-R7, so it can't pass that value
     assert(r2 <= 7 && "Register 2 can't be above 7");
@@ -73,8 +85,10 @@ uint16_t instruction_maker(uint8_t opcode, uint8_t rd, uint8_t r1, uint8_t r2) {
 void add_to_memory(uint16_t inst, Machine *machine) {
     uint8_t high = inst >> 8;
     uint8_t low = inst;
-    machine->memory[machine->cpu.load_addr] = high;
-    machine->memory[machine->cpu.load_addr + 1] = low;
+
+    uint32_t addr = resolve_addr(machine->cpu.seg, machine->cpu.load_addr);
+    machine->memory[addr] = high;
+    machine->memory[addr + 1] = low;
     machine->cpu.load_addr += 2;
 }
 
@@ -86,4 +100,12 @@ void start_machine(Machine *machine) {
     machine->cpu.load_addr  = 0x1000;
 
     machine->cpu.sp         = 0xFFFF;   //Setting the stack pointer
+}
+
+void throttle(double hz) {
+    double seconds_per_cycle = 1 / hz;
+    struct timespec ts;
+    ts.tv_sec = (time_t)seconds_per_cycle;
+    ts.tv_nsec = (long)((seconds_per_cycle - ts.tv_sec) * 1e9);
+    nanosleep(&ts, NULL);
 }
