@@ -13,8 +13,19 @@ typedef struct {
     uint16_t load_addr; // pointer to the current free ram slot
 
     uint8_t seg;        // the 8-bit segment register used when offsetting the 16-bit location
-    uint8_t sp;         // stack pointer, to the top of the stack
-    uint8_t flag;       // flags: the like of zf, cf, et.c    
+    uint16_t sp;         // stack pointer, to the top of the stack
+    
+    uint8_t flag;
+    /*
+    * Zero Flag
+    * Carry Flag
+    * Sign Flag
+    * Overflow Flag
+    * Parity Flag
+    * Direction Flag    string processing direction experimental
+    * Interrupt Flag    enables or disables hardware interrupts
+    * 0 IF DF PF OF SF CF ZF, 1 is true and 0 is false
+    */
 
     uint8_t halt;       // Invariant 4 - this is basically a bool flag for halt, 1 means halt 0 means not
 } CPU;
@@ -29,5 +40,7 @@ uint16_t fetch(Machine *machine);
 void cycle(Machine *machine);
 uint16_t instruction_maker(uint8_t mode, uint8_t opcode, uint8_t r1, uint8_t r2);
 void add_to_memory(uint16_t inst, Machine *machine);
+
+void start_machine(Machine *machine);
 
 #endif  //CPU_H

@@ -65,7 +65,7 @@ void cycle(Machine *machine) {
 uint16_t instruction_maker(uint8_t opcode, uint8_t rd, uint8_t r1, uint8_t r2) {
     assert(r1 <= 7 && "Register 1 can't be above 7");    // There are only 8 registers R0-R7, so it can't pass that value
     assert(r2 <= 7 && "Register 2 can't be above 7");
-    assert(rd <= 7 && "Register 2 can't be above 7");
+    assert(rd <= 7 && "Register destination can't be above 7");
     uint16_t inst = (opcode << 9) | (rd << 6) | (r1 << 3) | (r2 << 0);
     return inst;
 }
@@ -76,4 +76,14 @@ void add_to_memory(uint16_t inst, Machine *machine) {
     machine->memory[machine->cpu.load_addr] = high;
     machine->memory[machine->cpu.load_addr + 1] = low;
     machine->cpu.load_addr += 2;
+}
+
+void start_machine(Machine *machine) {
+    machine->cpu.flag       = 0x00;
+    machine->cpu.seg        = 0X01;     // Setting the segment to start of RAM
+
+    machine->cpu.pc         = 0x1000;
+    machine->cpu.load_addr  = 0x1000;
+
+    machine->cpu.sp         = 0xFFFF;   //Setting the stack pointer
 }
