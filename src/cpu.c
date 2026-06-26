@@ -65,6 +65,25 @@ void cycle(Machine *machine) {
                 printf("ADD REG %d, REG %d, REG %d\n", rd, r1, r2);
                 printf("Register [%d] = %d \t 0x%04" PRIX16 "\n", rd, machine->cpu.r[rd], machine->cpu.r[rd]);
                 break;
+	
+	case PUSH:
+		machine->cpu.sp -= 2;
+		uint32_t addr = resolve_addr(0xFF, machine->cpu.sp);
+		machine->memory[addr]		= machine->cpu.r[rd] >> 8;
+		machine->memory[addr + 1]	= machine->cpu.r[rd] & 0xFF;
+		printf("Added Reg[%d] data to stack\n", rd);
+		printf("PUSH Reg %d\n", rd);
+		break;
+	
+	case POP:
+		addr	= resolve_addr(0xFF, machine->cpu.sp);
+		machine->cpu.r[rd] = (machine->memory[addr] << 8) | machine->memory[addr + 1];
+		printf("Popped value %d data from stack\n", machine->cpu.r[rd]);
+		printf("POP Reg %d\n", rd);
+		machine->cpu.sp += 2;
+		// Will add a checking mechanism to avoid overflowing from 0xFFFFFF
+		break;
+
 
             default:
                 printf("You didn't put a valid opcode\n");

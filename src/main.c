@@ -25,7 +25,16 @@ int main(void) {
     uint16_t inst = instruction_maker(MOVI, 0x03, 0x02, 0x04);  // (2 << 3) | 4 = 010100b = 20d = 0x14
     add_to_memory(inst, &machine);
 
+	inst = instruction_maker(MOVI, 0x04, 0x02, 0x05);
+    add_to_memory(inst, &machine);
+
     inst =  instruction_maker(MOV, 0x02, 0x03, 0x01);
+    add_to_memory(inst, &machine);
+
+    inst = instruction_maker(PUSH, 0x04, 0x04, 0x03);
+    add_to_memory(inst, &machine);
+
+    inst = instruction_maker(POP, 0x02, 0x02, 0x03);
     add_to_memory(inst, &machine);
 
     inst =  instruction_maker(ADD, 0x01, 0x02, 0x03);
