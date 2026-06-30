@@ -65,8 +65,36 @@ void cycle(Machine *machine) {
                 printf("ADD REG %d, REG %d, REG %d\n", rd, r1, r2);
                 printf("Register [%d] = %d \t 0x%04" PRIX16 "\n", rd, machine->cpu.r[rd], machine->cpu.r[rd]);
                 break;
+
+            case ADDI:
+                machine->cpu.r[rd] = machine->cpu.r[r1] + r2;
+                printf("ADD REG %d, REG %d, %d\n", rd, r1, r2);
+                printf("Register [%d] = %d \t 0x%04" PRIX16 "\n", rd, machine->cpu.r[rd], machine->cpu.r[rd]);
+		break;
+	
+	case SUB:
+		machine->cpu.r[rd] = machine->cpu.r[r1] - machine->cpu.r[r2];
+		if (machine->cpu.r[rd] == 0) {
+			machine->cpu.flag |= 00000001;
+		}
+                printf("SUB REG %d, REG %d, REG %d\n", rd, r1, r2);
+                printf("Register [%d] = %d \t 0x%04" PRIX16 "\n", rd, machine->cpu.r[rd], machine->cpu.r[rd]);
+                break;
+
+	case SUBI:
+		machine->cpu.r[rd] = machine->cpu.r[r1] - r2;
+		if (machine->cpu.r[rd] == 0) {
+			machine->cpu.flag |= 00000001;
+		}
+                printf("SUB REG %d, REG %d, %d\n", rd, r1, r2);
+                printf("Register [%d] = %d \t 0x%04" PRIX16 "\n", rd, machine->cpu.r[rd], machine->cpu.r[rd]);
+		break;
 	
 	case PUSH:
+		if (machine->cpu.sp < 2) {
+			printf("\n\nNo Room in stack\n\n");
+			break;
+		}
 		machine->cpu.sp -= 2;
 		uint32_t addr = resolve_addr(0xFF, machine->cpu.sp);
 		machine->memory[addr]		= machine->cpu.r[rd] >> 8;

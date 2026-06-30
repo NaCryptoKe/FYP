@@ -6,7 +6,7 @@
 
 #define MEMORY_SIZE 16 * 1024 * 1024        // 16 MiB
 #define STACK_SIZE  64 * 1024               // 64 KiB for stack
-#define CLOCK_SPEED 1                      // Clock speed of the virtual cpu, currently at 10Hz
+#define CLOCK_SPEED 1000000                      // Clock speed of the virtual cpu, currently at 10Hz
 
 typedef struct {
     uint16_t r[8];      // Invariant 2- stating the 16 bit R0-R7
@@ -27,6 +27,7 @@ typedef struct {
     * Direction Flag    string processing direction experimental
     * Interrupt Flag    enables or disables hardware interrupts
     * 0 IF DF PF OF SF CF ZF, 1 is true and 0 is false
+    * 0 0 0 0 0 0 0 0
     */
 
     uint8_t halt;       // Invariant 4 - this is basically a bool flag for halt, 1 means halt 0 means not

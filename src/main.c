@@ -31,18 +31,40 @@ int main(void) {
     inst =  instruction_maker(MOV, 0x02, 0x03, 0x01);
     add_to_memory(inst, &machine);
 
-    inst = instruction_maker(PUSH, 0x04, 0x04, 0x03);
-    add_to_memory(inst, &machine);
+    //machine.cpu.sp = 0x0000;
 
-    inst = instruction_maker(POP, 0x02, 0x02, 0x03);
-    add_to_memory(inst, &machine);
+    for (size_t i = 0; i < 32764; i++) {
+	inst = instruction_maker(PUSH, 0x04, 0x04, 0x03);
+	add_to_memory(inst, &machine);
+    }
 
-    inst =  instruction_maker(ADD, 0x01, 0x02, 0x03);
-    add_to_memory(inst, &machine);
+    //inst = instruction_maker(POP, 0x02, 0x02, 0x03);
+    //add_to_memory(inst, &machine);
 
+    //inst =  instruction_maker(ADD, 0x01, 0x02, 0x03);
+    //add_to_memory(inst, &machine);
+
+    //inst =  instruction_maker(SUBI, 0x01, 0x02, 0x02);
+    //add_to_memory(inst, &machine);
     inst = instruction_maker(HALT, 0x00, 0x00, 0x00);
     add_to_memory(inst, &machine);
 
     cycle(&machine);
+
+    printf("\n=== Flag Output ===\n");
+    printf("%08b", machine.cpu.flag);
+
+    pc = resolve_addr(machine.cpu.seg, machine.cpu.pc);
+    ld = resolve_addr(machine.cpu.seg, machine.cpu.load_addr);
+    sp = resolve_addr(0XFF, machine.cpu.sp);
+
+    printf(
+        "\n\nProgram Counter: 0X%06" PRIX32 
+        "\nCurrent Address: 0X%06" PRIX32 
+        "\nStack Pointer: 0X%06" PRIX32 
+        "\nZero Flag: %08b\n",
+        pc, ld, sp, machine.cpu.flag
+    );
+
     return 0;
 }
